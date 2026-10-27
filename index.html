@@ -6,56 +6,23 @@
     <title>Laporan Keuangan Star Class</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-      /* Styling Khusus Cetak / Print PDF */
-      @media print {
-        body {
-          background-color: white !important;
-          color: black !important;
-          padding: 0 !important;
-        }
-        .no-print {
-          display: none !important;
-        }
-        .print-only {
-          display: block !important;
-        }
-        .print-card {
-          border: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-        }
-        table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-        }
-        th,
-        td {
-          border: 1px solid #cbd5e1 !important;
-          padding: 6px 10px !important;
-        }
-      }
-    </style>
+    <!-- HTML2PDF Library untuk Download PDF di HP/Desktop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   </head>
   <body class="bg-slate-100 text-slate-800 p-4 md:p-8">
     <div class="max-w-6xl mx-auto space-y-6">
+      
       <!-- Header Admin -->
-      <header class="no-print bg-blue-600 text-white p-6 rounded-2xl shadow-md flex justify-between items-center">
+      <header class="bg-blue-600 text-white p-6 rounded-2xl shadow-md flex justify-between items-center">
         <div>
           <h1 class="text-2xl font-bold">Sistem Kas Star Class</h1>
           <p class="text-blue-100 text-sm mt-1">Manajemen Pembayaran & Laporan Keuangan</p>
         </div>
       </header>
 
-      <!-- Header Khusus Cetak Laporan -->
-      <div class="hidden print-only text-center mb-6 pb-4 border-b-2 border-slate-800">
-        <h1 class="text-2xl font-bold uppercase tracking-wider text-slate-900">DATA PEMBAYARAN UANG BULANAN STAR CLASS</h1>
-        <p id="printPeriodTitle" class="text-md font-semibold text-slate-700 uppercase mt-1">PERIODE LAPORAN</p>
-        <p class="text-xs text-slate-500 mt-0.5">Tanggal Cetak: <span id="printDate"></span></p>
-      </div>
-
       <!-- Control Panel -->
-      <section class="no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+        
         <!-- Form Tambah Periode -->
         <div>
           <h2 class="text-md font-semibold mb-3 text-slate-700">1. Tambah Periode Bulan</h2>
@@ -68,7 +35,9 @@
               <label class="block text-xs font-medium text-slate-500 mb-1">Tarif Iuran per Siswa (Rp)</label>
               <input type="number" id="feeInput" placeholder="Contoh: 20000" required class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
-            <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg text-sm hover:bg-blue-700 transition">+ Buat Periode Baru</button>
+            <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+              + Buat Periode Baru
+            </button>
           </form>
         </div>
 
@@ -82,7 +51,7 @@
           </div>
 
           <!-- Card Stat Ringkas -->
-          <div id="summaryCard" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-xl mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center print-card">
+          <div id="summaryCard" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-xl mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div>
               <p class="text-[10px] text-slate-500 uppercase font-semibold">Total Masuk</p>
               <p id="statTotalIncome" class="text-sm font-bold text-emerald-600">Rp0</p>
@@ -101,22 +70,26 @@
             </div>
           </div>
         </div>
+
       </section>
 
       <!-- Main Section -->
       <div id="mainContent" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
         <!-- Table Pembayaran -->
-        <main class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 print-card">
-          <div class="flex justify-between items-center">
+        <main class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 class="text-lg font-semibold">Daftar Pembayaran Siswa</h2>
               <p id="statPaidCount" class="text-xs text-slate-500">0 / 0 Siswa Lunas</p>
             </div>
             <div class="flex space-x-2">
-              <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow transition flex items-center space-x-1">
-                <span>🖨️ Cetak / Export PDF</span>
+              <button onclick="openReportPreview()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow transition flex items-center space-x-1">
+                <span>📄 Preview / Download PDF</span>
               </button>
-              <button id="btnMarkAllPaid" onclick="markAllPaid()" class="no-print bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow transition">✔️ Lunas Semua Siswa</button>
+              <button id="btnMarkAllPaid" onclick="markAllPaid()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow transition">
+                ✔️ Lunas Semua
+              </button>
             </div>
           </div>
 
@@ -125,19 +98,22 @@
 
         <!-- Sidebar Right -->
         <div class="space-y-6">
+          
           <!-- Card Pengeluaran -->
-          <aside class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 print-card">
+          <aside class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-lg font-semibold">Pengeluaran Bulan Ini</h2>
-
-            <div id="wifiFormContainer" class="no-print space-y-2 bg-blue-50 p-3 rounded-xl border border-blue-100">
+            
+            <div id="wifiFormContainer" class="space-y-2 bg-blue-50 p-3 rounded-xl border border-blue-100">
               <p class="text-xs font-semibold text-blue-700">1. Input Pembayaran Wi-Fi</p>
               <form onsubmit="addWifiExpense(event)" class="space-y-2">
                 <input type="number" id="wifiAmountInput" placeholder="Nominal Biaya Wi-Fi (Rp)" required class="w-full px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <button type="submit" class="w-full bg-blue-600 text-white font-medium py-1.5 rounded-lg text-xs hover:bg-blue-700 transition">Simpan Wi-Fi</button>
+                <button type="submit" class="w-full bg-blue-600 text-white font-medium py-1.5 rounded-lg text-xs hover:bg-blue-700 transition">
+                  Simpan Wi-Fi
+                </button>
               </form>
             </div>
 
-            <div id="extraExpenseSection" class="no-print hidden space-y-3">
+            <div id="extraExpenseSection" class="hidden space-y-3">
               <button id="btnToggleExtraForm" onclick="toggleExtraForm()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg text-xs border border-slate-300 transition">
                 + Tambah Pengeluaran Lain (Token/AC/dll)
               </button>
@@ -147,8 +123,12 @@
                 <input type="text" id="expenseNameInput" placeholder="Nama item (Token, Cuci AC...)" required class="w-full px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <input type="number" id="expenseAmountInput" placeholder="Jumlah biaya (Rp)" required class="w-full px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <div class="flex space-x-2">
-                  <button type="submit" class="w-full bg-rose-600 text-white font-medium py-1.5 rounded-lg text-xs hover:bg-rose-700 transition">Simpan</button>
-                  <button type="button" onclick="toggleExtraForm()" class="px-3 bg-slate-200 text-slate-600 rounded-lg text-xs">Batal</button>
+                  <button type="submit" class="w-full bg-rose-600 text-white font-medium py-1.5 rounded-lg text-xs hover:bg-rose-700 transition">
+                    Simpan
+                  </button>
+                  <button type="button" onclick="toggleExtraForm()" class="px-3 bg-slate-200 text-slate-600 rounded-lg text-xs">
+                    Batal
+                  </button>
                 </div>
               </form>
             </div>
@@ -156,20 +136,83 @@
             <div id="expenseList" class="space-y-2 text-sm pt-2 border-t border-slate-100"></div>
           </aside>
 
-          <!-- Card Kas Lain-Lain Bulan Ini -->
-          <aside class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4 print-card">
+          <!-- Card Kas Lain-Lain -->
+          <aside class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <h2 class="text-lg font-semibold text-emerald-800">Kas Lain-Lain Bulan Ini</h2>
-            <p class="no-print text-xs text-slate-500">Sisa hias kelas, pelunasan tunggakan lama, atau saldo kas masuk lainnya.</p>
+            <p class="text-xs text-slate-500">Sisa hias kelas, pelunasan tunggakan lama, atau saldo kas masuk lainnya.</p>
 
-            <form onsubmit="addCashIncome(event)" class="no-print space-y-2 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+            <form onsubmit="addCashIncome(event)" class="space-y-2 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
               <input type="text" id="incomeSourceInput" placeholder="Sumber (misal: Sisa hias kelas)" required class="w-full px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               <input type="number" id="incomeAmountInput" placeholder="Nominal (Rp)" required class="w-full px-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              <button type="submit" class="w-full bg-emerald-600 text-white font-medium py-1.5 rounded-lg text-xs hover:bg-emerald-700 transition">+ Tambah Kas Masuk</button>
+              <button type="submit" class="w-full bg-emerald-600 text-white font-medium py-1.5 rounded-lg text-xs hover:bg-emerald-700 transition">
+                + Tambah Kas Masuk
+              </button>
             </form>
 
             <div id="cashIncomeList" class="space-y-2 text-sm pt-2 border-t border-slate-100"></div>
           </aside>
+
         </div>
+
+      </div>
+
+    </div>
+
+    <!-- MODAL PREVIEW LAPORAN & DOWNLOAD PDF -->
+    <div id="previewModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        
+        <!-- Modal Header -->
+        <div class="p-4 bg-slate-800 text-white flex justify-between items-center">
+          <h3 class="font-bold text-sm sm:text-base">Preview Laporan PDF</h3>
+          <button onclick="closeReportPreview()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+
+        <!-- Modal Content Scrollable Area -->
+        <div class="p-4 sm:p-8 overflow-y-auto bg-slate-50 flex-1">
+          <!-- Area yang akan di-convert jadi PDF -->
+          <div id="pdfPaper" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 space-y-6">
+            
+            <div class="text-center pb-4 border-b-2 border-slate-800">
+              <h1 class="text-xl font-bold uppercase tracking-wider">DATA PEMBAYARAN UANG BULANAN STAR CLASS</h1>
+              <p id="pdfPeriodTitle" class="text-sm font-semibold text-slate-700 uppercase mt-1">PERIODE LAPORAN</p>
+              <p class="text-[11px] text-slate-500 mt-1">Dicetak pada: <span id="pdfPrintDate"></span></p>
+            </div>
+
+            <!-- Ringkasan Kas -->
+            <div id="pdfSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs"></div>
+
+            <!-- Table Siswa -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">I. Status Pembayaran Siswa</h4>
+              <div id="pdfStudentTable"></div>
+            </div>
+
+            <!-- Rincian Pengeluaran & Kas Lain -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
+              <div>
+                <h4 class="font-bold uppercase tracking-wider text-slate-700 mb-2">II. Pengeluaran Bulan Ini</h4>
+                <div id="pdfExpenseList"></div>
+              </div>
+              <div>
+                <h4 class="font-bold uppercase tracking-wider text-slate-700 mb-2">III. Kas Masuk Lain-Lain</h4>
+                <div id="pdfCashIncomeList"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Modal Footer / Action Button -->
+        <div class="p-4 bg-white border-t border-slate-200 flex justify-end space-x-3">
+          <button onclick="closeReportPreview()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium">
+            Tutup
+          </button>
+          <button onclick="downloadPDF()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow flex items-center space-x-1">
+            <span>📥 Download File PDF</span>
+          </button>
+        </div>
+
       </div>
     </div>
 
@@ -191,13 +234,13 @@
       async function init() {
         await loadPeriods();
         await loadStudents();
-
-        const today = new Date();
-        document.getElementById('printDate').innerText = today.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       }
 
       async function loadPeriods() {
-        const { data: periods, error } = await supabaseClient.from('periods').select('*').order('id', { ascending: false });
+        const { data: periods, error } = await supabaseClient
+          .from('periods')
+          .select('*')
+          .order('id', { ascending: false });
 
         if (error) {
           console.error(error);
@@ -214,7 +257,10 @@
       }
 
       async function loadStudents() {
-        const { data, error } = await supabaseClient.from('students').select('*').order('id', { ascending: true });
+        const { data, error } = await supabaseClient
+          .from('students')
+          .select('*')
+          .order('id', { ascending: true });
 
         if (!error && data) studentsData = data;
       }
@@ -236,7 +282,7 @@
           document.getElementById('monthYearInput').value = '';
           document.getElementById('feeInput').value = '';
           await loadPeriods();
-
+          
           if (data && data.length > 0) {
             document.getElementById('periodSelect').value = data[0].id;
             onPeriodChange();
@@ -258,8 +304,6 @@
         currentFee = Number(selectedOption.getAttribute('data-fee')) || 0;
         currentPeriodName = selectedOption.getAttribute('data-name') || '';
 
-        document.getElementById('printPeriodTitle').innerText = `BULAN ${currentPeriodName.toUpperCase()}`;
-
         document.getElementById('mainContent').classList.remove('hidden');
         document.getElementById('summaryCard').classList.remove('hidden');
 
@@ -267,8 +311,10 @@
       }
 
       async function loadPaymentsExpensesAndIncomes() {
-        // 1. Load Payments
-        const { data: payments } = await supabaseClient.from('payments').select('*').eq('period_id', currentPeriodId);
+        const { data: payments } = await supabaseClient
+          .from('payments')
+          .select('*')
+          .eq('period_id', currentPeriodId);
 
         paymentsData = {};
         if (payments) {
@@ -277,13 +323,19 @@
           });
         }
 
-        // 2. Load Expenses
-        const { data: expenses } = await supabaseClient.from('expenses').select('*').eq('period_id', currentPeriodId).order('id', { ascending: true });
+        const { data: expenses } = await supabaseClient
+          .from('expenses')
+          .select('*')
+          .eq('period_id', currentPeriodId)
+          .order('id', { ascending: true });
 
         expensesData = expenses || [];
 
-        // 3. Load Cash Incomes spesifik periode ini
-        const { data: cashIncomes } = await supabaseClient.from('cash_incomes').select('*').eq('period_id', currentPeriodId).order('id', { ascending: true });
+        const { data: cashIncomes } = await supabaseClient
+          .from('cash_incomes')
+          .select('*')
+          .eq('period_id', currentPeriodId)
+          .order('id', { ascending: true });
 
         cashIncomesData = cashIncomes || [];
 
@@ -323,7 +375,9 @@
               <td class="p-3 text-center text-slate-500">Rp${currentFee.toLocaleString('id-ID')}</td>
               <td class="p-3 text-center">
                 <button onclick="togglePayment(${s.id}, ${isPaid})" class="px-4 py-1.5 rounded-full text-xs font-semibold transition ${
-                  isPaid ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                  isPaid 
+                    ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
+                    : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                 }">
                   ${isPaid ? '✔️ Lunas' : 'Belum Bayar'}
                 </button>
@@ -348,7 +402,7 @@
         const wifiFormContainer = document.getElementById('wifiFormContainer');
         const extraExpenseSection = document.getElementById('extraExpenseSection');
 
-        const hasWifi = expensesData.some((exp) => exp.expense_name.toLowerCase().includes('wi-fi') || exp.expense_name.toLowerCase().includes('wifi'));
+        const hasWifi = expensesData.some(exp => exp.expense_name.toLowerCase().includes('wi-fi') || exp.expense_name.toLowerCase().includes('wifi'));
 
         if (hasWifi) {
           wifiFormContainer.classList.add('hidden');
@@ -364,13 +418,13 @@
         }
 
         let html = `<p class="text-xs font-semibold text-slate-500 mb-2">Item Terdata:</p><ul class="divide-y divide-slate-100">`;
-        expensesData.forEach((exp) => {
+        expensesData.forEach(exp => {
           html += `
             <li class="py-2 flex justify-between items-center text-xs">
               <span class="font-medium text-slate-700">${exp.expense_name}</span>
               <div class="flex items-center space-x-2">
                 <span class="text-rose-600 font-bold">Rp${Number(exp.amount).toLocaleString('id-ID')}</span>
-                <button onclick="deleteExpense(${exp.id})" class="no-print text-slate-400 hover:text-rose-600 font-bold px-1">✕</button>
+                <button onclick="deleteExpense(${exp.id})" class="text-slate-400 hover:text-rose-600 font-bold px-1">✕</button>
               </div>
             </li>
           `;
@@ -388,13 +442,13 @@
         }
 
         let html = `<ul class="divide-y divide-slate-100">`;
-        cashIncomesData.forEach((inc) => {
+        cashIncomesData.forEach(inc => {
           html += `
             <li class="py-2 flex justify-between items-center text-xs">
               <span class="font-medium text-slate-700">${inc.source_name}</span>
               <div class="flex items-center space-x-2">
                 <span class="text-emerald-600 font-bold">Rp${Number(inc.amount).toLocaleString('id-ID')}</span>
-                <button onclick="deleteCashIncome(${inc.id})" class="no-print text-slate-400 hover:text-rose-600 font-bold px-1">✕</button>
+                <button onclick="deleteCashIncome(${inc.id})" class="text-slate-400 hover:text-rose-600 font-bold px-1">✕</button>
               </div>
             </li>
           `;
@@ -419,7 +473,7 @@
 
         document.getElementById('statTotalIncome').innerText = `Rp${totalIncome.toLocaleString('id-ID')}`;
         document.getElementById('statTotalExpense').innerText = `Rp${totalExpense.toLocaleString('id-ID')}`;
-
+        
         const balanceEl = document.getElementById('statBalance');
         balanceEl.innerText = `Rp${balance.toLocaleString('id-ID')}`;
         if (balance < 0) {
@@ -430,42 +484,30 @@
       }
 
       async function calculateGrandTotal() {
-        // 1. Total dari Iuran Siswa
         const { data: allPayments } = await supabaseClient.from('payments').select('period_id, is_paid').eq('is_paid', true);
         let grandStudentIncome = 0;
         if (allPayments && allPeriodsData.length > 0) {
           const feeMap = {};
-          allPeriodsData.forEach((p) => {
-            feeMap[p.id] = Number(p.fee_per_student) || 0;
-          });
-          allPayments.forEach((p) => {
-            grandStudentIncome += feeMap[p.period_id] || 0;
-          });
+          allPeriodsData.forEach(p => { feeMap[p.id] = Number(p.fee_per_student) || 0; });
+          allPayments.forEach(p => { grandStudentIncome += (feeMap[p.period_id] || 0); });
         }
 
-        // 2. Total dari Pengeluaran
         const { data: allExpenses } = await supabaseClient.from('expenses').select('amount');
         let grandExpense = 0;
         if (allExpenses) {
-          allExpenses.forEach((e) => {
-            grandExpense += Number(e.amount) || 0;
-          });
+          allExpenses.forEach(e => { grandExpense += Number(e.amount) || 0; });
         }
 
-        // 3. Total dari Kas Lain-Lain Seluruh Periode
         const { data: allOtherIncomes } = await supabaseClient.from('cash_incomes').select('amount');
         let grandOtherIncome = 0;
         if (allOtherIncomes) {
-          allOtherIncomes.forEach((i) => {
-            grandOtherIncome += Number(i.amount) || 0;
-          });
+          allOtherIncomes.forEach(i => { grandOtherIncome += Number(i.amount) || 0; });
         }
 
-        // Kalkulasi Akhir
-        const grandTotal = grandStudentIncome + grandOtherIncome - grandExpense;
+        const grandTotal = (grandStudentIncome + grandOtherIncome) - grandExpense;
         const grandEl = document.getElementById('statGrandTotal');
         grandEl.innerText = `Rp${grandTotal.toLocaleString('id-ID')}`;
-
+        
         if (grandTotal < 0) {
           grandEl.className = 'text-sm font-bold text-rose-600';
         } else {
@@ -473,16 +515,100 @@
         }
       }
 
+      // === LOGIKA PREVIEW & DOWNLOAD PDF ===
+      function openReportPreview() {
+        const modal = document.getElementById('previewModal');
+        document.getElementById('pdfPeriodTitle').innerText = `BULAN ${currentPeriodName.toUpperCase()}`;
+        document.getElementById('pdfPrintDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        // Copy Ringkasan Stat
+        document.getElementById('pdfSummary').innerHTML = document.getElementById('summaryCard').innerHTML;
+
+        // Render Tabel PDF Khusus (Clean Table)
+        let tableHtml = `
+          <table class="w-full text-left border-collapse text-xs border border-slate-300">
+            <thead>
+              <tr class="bg-slate-100 border-b border-slate-300 font-bold text-slate-700">
+                <th class="p-2 border border-slate-300 text-center w-8">No</th>
+                <th class="p-2 border border-slate-300">Nama Siswa</th>
+                <th class="p-2 border border-slate-300 text-center">Tarif</th>
+                <th class="p-2 border border-slate-300 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        studentsData.forEach((s, idx) => {
+          const payment = paymentsData[s.id];
+          const isPaid = payment ? payment.is_paid : false;
+          tableHtml += `
+            <tr class="${isPaid ? '' : 'bg-amber-50'}">
+              <td class="p-2 border border-slate-300 text-center">${idx + 1}</td>
+              <td class="p-2 border border-slate-300 font-medium">${s.name}</td>
+              <td class="p-2 border border-slate-300 text-center">Rp${currentFee.toLocaleString('id-ID')}</td>
+              <td class="p-2 border border-slate-300 text-center font-bold ${isPaid ? 'text-emerald-700' : 'text-amber-700'}">
+                ${isPaid ? 'LUNAS' : 'BELUM BAYAR'}
+              </td>
+            </tr>
+          `;
+        });
+        tableHtml += `</tbody></table>`;
+        document.getElementById('pdfStudentTable').innerHTML = tableHtml;
+
+        // Copy Expenses
+        let expHtml = '<ul class="divide-y border-t border-b border-slate-200 py-1">';
+        if (expensesData.length === 0) expHtml += '<li class="py-1 text-slate-400 italic">Nihil</li>';
+        else {
+          expensesData.forEach(e => {
+            expHtml += `<li class="py-1 flex justify-between"><span>${e.expense_name}</span><span class="font-bold text-rose-600">Rp${Number(e.amount).toLocaleString('id-ID')}</span></li>`;
+          });
+        }
+        expHtml += '</ul>';
+        document.getElementById('pdfExpenseList').innerHTML = expHtml;
+
+        // Copy Cash Incomes
+        let incHtml = '<ul class="divide-y border-t border-b border-slate-200 py-1">';
+        if (cashIncomesData.length === 0) incHtml += '<li class="py-1 text-slate-400 italic">Nihil</li>';
+        else {
+          cashIncomesData.forEach(i => {
+            incHtml += `<li class="py-1 flex justify-between"><span>${i.source_name}</span><span class="font-bold text-emerald-600">Rp${Number(i.amount).toLocaleString('id-ID')}</span></li>`;
+          });
+        }
+        incHtml += '</ul>';
+        document.getElementById('pdfCashIncomeList').innerHTML = incHtml;
+
+        modal.classList.remove('hidden');
+      }
+
+      function closeReportPreview() {
+        document.getElementById('previewModal').classList.add('hidden');
+      }
+
+      function downloadPDF() {
+        const element = document.getElementById('pdfPaper');
+        const opt = {
+          margin:       0.3,
+          filename:     `Laporan_Kas_StarClass_${currentPeriodName.replace(/\s+/g, '_')}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+      }
+
+      // === FUNGSI DATABASE Standard ===
       async function addCashIncome(e) {
         e.preventDefault();
         const source = document.getElementById('incomeSourceInput').value;
         const amount = document.getElementById('incomeAmountInput').value;
 
-        const { error } = await supabaseClient.from('cash_incomes').insert([{ period_id: currentPeriodId, source_name: source, amount: amount }]);
+        const { error } = await supabaseClient
+          .from('cash_incomes')
+          .insert([{ period_id: currentPeriodId, source_name: source, amount: amount }]);
 
-        if (error) {
-          alert('Gagal menambah kas: ' + error.message);
-        } else {
+        if (error) alert('Gagal menambah kas: ' + error.message);
+        else {
           document.getElementById('incomeSourceInput').value = '';
           document.getElementById('incomeAmountInput').value = '';
           await loadPaymentsExpensesAndIncomes();
@@ -492,7 +618,10 @@
       async function deleteCashIncome(id) {
         if (!confirm('Hapus item kas ini?')) return;
 
-        const { error } = await supabaseClient.from('cash_incomes').delete().eq('id', id);
+        const { error } = await supabaseClient
+          .from('cash_incomes')
+          .delete()
+          .eq('id', id);
 
         if (error) alert('Gagal menghapus: ' + error.message);
         else await loadPaymentsExpensesAndIncomes();
@@ -513,14 +642,12 @@
         } else {
           const { data, error } = await supabaseClient
             .from('payments')
-            .insert([
-              {
-                student_id: studentId,
-                period_id: currentPeriodId,
-                is_paid: newStatus,
-                paid_at: newStatus ? new Date().toISOString() : null,
-              },
-            ])
+            .insert([{
+              student_id: studentId,
+              period_id: currentPeriodId,
+              is_paid: newStatus,
+              paid_at: newStatus ? new Date().toISOString() : null
+            }])
             .select();
 
           if (error) alert('Gagal simpan status: ' + error.message);
@@ -536,18 +663,19 @@
         if (!confirm('Tandai SEMUA SISWA lunas untuk bulan ini?')) return;
 
         const now = new Date().toISOString();
-        const upsertPayload = studentsData.map((s) => ({
+        const upsertPayload = studentsData.map(s => ({
           student_id: s.id,
           period_id: currentPeriodId,
           is_paid: true,
-          paid_at: now,
+          paid_at: now
         }));
 
-        const { error } = await supabaseClient.from('payments').upsert(upsertPayload, { onConflict: 'student_id, period_id' });
+        const { error } = await supabaseClient
+          .from('payments')
+          .upsert(upsertPayload, { onConflict: 'student_id, period_id' });
 
-        if (error) {
-          alert('Gagal melunaskan semua: ' + error.message);
-        } else {
+        if (error) alert('Gagal melunaskan semua: ' + error.message);
+        else {
           alert('Berhasil menandai semua siswa lunas!');
           await loadPaymentsExpensesAndIncomes();
         }
@@ -557,17 +685,16 @@
         e.preventDefault();
         const amount = document.getElementById('wifiAmountInput').value;
 
-        const { error } = await supabaseClient.from('expenses').insert([
-          {
+        const { error } = await supabaseClient
+          .from('expenses')
+          .insert([{
             period_id: currentPeriodId,
             expense_name: 'Pembayaran Wi-Fi',
-            amount: amount,
-          },
-        ]);
+            amount: amount
+          }]);
 
-        if (error) {
-          alert('Gagal menambah Wi-Fi: ' + error.message);
-        } else {
+        if (error) alert('Gagal menambah Wi-Fi: ' + error.message);
+        else {
           document.getElementById('wifiAmountInput').value = '';
           await loadPaymentsExpensesAndIncomes();
         }
@@ -578,17 +705,16 @@
         const name = document.getElementById('expenseNameInput').value;
         const amount = document.getElementById('expenseAmountInput').value;
 
-        const { error } = await supabaseClient.from('expenses').insert([
-          {
+        const { error } = await supabaseClient
+          .from('expenses')
+          .insert([{
             period_id: currentPeriodId,
             expense_name: name,
-            amount: amount,
-          },
-        ]);
+            amount: amount
+          }]);
 
-        if (error) {
-          alert('Gagal menambah pengeluaran: ' + error.message);
-        } else {
+        if (error) alert('Gagal menambah pengeluaran: ' + error.message);
+        else {
           document.getElementById('expenseNameInput').value = '';
           document.getElementById('expenseAmountInput').value = '';
           toggleExtraForm();
@@ -599,7 +725,10 @@
       async function deleteExpense(id) {
         if (!confirm('Hapus item pengeluaran ini?')) return;
 
-        const { error } = await supabaseClient.from('expenses').delete().eq('id', id);
+        const { error } = await supabaseClient
+          .from('expenses')
+          .delete()
+          .eq('id', id);
 
         if (error) alert('Gagal menghapus: ' + error.message);
         else await loadPaymentsExpensesAndIncomes();
